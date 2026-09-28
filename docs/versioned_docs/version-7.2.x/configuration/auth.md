@@ -15,7 +15,6 @@ Valid providers are :
 - [Keycloak](#keycloak-auth-provider)
 - [GitLab](#gitlab-auth-provider)
 - [LinkedIn](#linkedin-auth-provider)
-- [Microsoft Azure AD](#microsoft-azure-ad-provider)
 - [OpenID Connect](#openid-connect-provider)
 - [login.gov](#logingov-provider)
 - [Nextcloud](#nextcloud-provider)
@@ -87,7 +86,7 @@ Note: The user is checked against the group members list on initial authenticati
    --oidc-issuer-url=https://sts.windows.net/{tenant-id}/
 ```
 
-Note: When using the Azure Auth provider with nginx and the cookie session store you may find the cookie is too large and doesn't get passed through correctly. Increasing the proxy_buffer_size in nginx or implementing the [redis session storage](sessions.md#redis-storage) should resolve this.
+Note: When using the Azure Auth provider with nginx and the cookie session store you may find the cookie is too large and doesn't get passed through correctly. Increasing the `proxy_buffer_size` in nginx or implementing the [redis session storage](sessions.md#redis-storage) should resolve this.
 
 ### ADFS Auth Provider
 
@@ -106,7 +105,7 @@ Note: When using the ADFS Auth provider with nginx and the cookie session store 
 
 ### Facebook Auth Provider
 
-1.  Create a new FB App from <https://developers.facebook.com/>
+1.  Create a new FB App from https://developers.facebook.com/
 2.  Under FB Login, set your Valid OAuth redirect URIs to `https://internal.yourcompany.com/oauth2/callback`
 
 ### GitHub Auth Provider
@@ -120,29 +119,41 @@ NOTE: When `--github-user` is set, the specified users are allowed to login even
 
 To restrict by organization only, include the following flag:
 
-    -github-org="": restrict logins to members of this organisation
+```
+    --github-org="": restrict logins to members of this organisation
+```
 
 To restrict within an organization to specific teams, include the following flag in addition to `-github-org`:
 
-    -github-team="": restrict logins to members of any of these teams (slug), separated by a comma
+```
+    --github-team="": restrict logins to members of any of these teams (slug), separated by a comma
+```
 
 If you would rather restrict access to collaborators of a repository, those users must either have push access to a public repository or any access to a private repository:
 
-    -github-repo="": restrict logins to collaborators of this repository formatted as orgname/repo
+```
+    --github-repo="": restrict logins to collaborators of this repository formatted as orgname/repo
+```
 
 If you'd like to allow access to users with **read only** access to a **public** repository you will need to provide a [token](https://github.com/settings/tokens) for a user that has write access to the repository. The token must be created with at least the `public_repo` scope:
 
-    -github-token="": the token to use when verifying repository collaborators
+```
+    --github-token="": the token to use when verifying repository collaborators
+```
 
 To allow a user to login with their username even if they do not belong to the specified org and team or collaborators, separated by a comma
 
-    -github-user="": allow logins by username, separated by a comma
+```
+    --github-user="": allow logins by username, separated by a comma
+```
 
 If you are using GitHub enterprise, make sure you set the following to the appropriate url:
 
-    -login-url="http(s)://<enterprise github host>/login/oauth/authorize"
-    -redeem-url="http(s)://<enterprise github host>/login/oauth/access_token"
-    -validate-url="http(s)://<enterprise github host>/api/v3"
+```
+    --login-url="http(s)://<enterprise github host>/login/oauth/authorize"
+    --redeem-url="http(s)://<enterprise github host>/login/oauth/access_token"
+    --validate-url="http(s)://<enterprise github host>/api/v3"
+```
 
 ### Keycloak Auth Provider
 
@@ -217,11 +228,17 @@ The following config should be set to ensure that the oauth will work properly. 
 
 Restricting by group membership is possible with the following option:
 
+```
     --gitlab-group="mygroup,myothergroup": restrict logins to members of any of these groups (slug), separated by a comma
+```
 
 If you are using self-hosted GitLab, make sure you set the following to the appropriate URL:
 
+```
     --oidc-issuer-url="<your gitlab url>"
+```
+
+If your self-hosted GitLab is on a sub-directory (e.g. domain.tld/gitlab), as opposed to its own sub-domain (e.g. gitlab.domain.tld), you may need to add a redirect from domain.tld/oauth pointing at e.g. domain.tld/gitlab/oauth.
 
 ### LinkedIn Auth Provider
 
@@ -233,12 +250,6 @@ For LinkedIn, the registration steps are:
     - In "OAuth 2.0 Redirect URLs", enter `https://internal.yourcompany.com/oauth2/callback`
 3.  Fill in the remaining required fields and Save.
 4.  Take note of the **Consumer Key / API Key** and **Consumer Secret / Secret Key**
-
-### Microsoft Azure AD Provider
-
-For adding an application to the Microsoft Azure AD follow [these steps to add an application](https://docs.microsoft.com/en-us/azure/active-directory/develop/quickstart-register-app).
-
-Take note of your `TenantId` if applicable for your situation. The `TenantId` can be used to override the default `common` authorization server with a tenant specific server.
 
 ### OpenID Connect Provider
 
@@ -257,7 +268,7 @@ To configure the OIDC provider for Dex, perform the following steps:
     go get github.com/dexidp/dex
     ```
 
-    See the [getting started guide](https://github.com/coreos/dex/blob/master/Documentation/getting-started.md) for more details.
+    See the [getting started guide](https://dexidp.io/docs/getting-started/) for more details.
 
 2. Setup oauth2-proxy with the correct provider and using the default ports and callbacks. Add a configuration block to the `staticClients` section of `examples/config-dev.yaml`:
 
@@ -343,14 +354,14 @@ you may wish to configure an authorization server for each application. Otherwis
 
 The `oidc_issuer_url` is based on URL from your **Authorization Server**'s **Issuer** field in step 2, or simply https://corp.okta.com .
 The `client_id` and `client_secret` are configured in the application settings.
-Generate a unique `client_secret` to encrypt the cookie.
+Generate a unique `cookie_secret` to encrypt the cookie.
 
 Then you can start the oauth2-proxy with `./oauth2-proxy --config /etc/example.cfg`
 
 #### Okta - localhost
 
 1. Signup for developer account: https://developer.okta.com/signup/
-2. Create New `Web` Application: https://${your-okta-domain}/dev/console/apps/new
+2. Create New `Web` Application: https://$\{your-okta-domain\}/dev/console/apps/new
 3. Example Application Settings for localhost:
    * **Name:** My Web App
    * **Base URIs:** http://localhost:4180/
@@ -359,12 +370,12 @@ Then you can start the oauth2-proxy with `./oauth2-proxy --config /etc/example.c
    * **Group assignments:** `Everyone`
    * **Grant type allowed:** `Authorization Code` and `Refresh Token`
 4. Make note of the `Client ID` and `Client secret`, they are needed in a future step
-5. Make note of the **default** Authorization Server Issuer URI from: https://${your-okta-domain}/admin/oauth2/as
+5. Make note of the **default** Authorization Server Issuer URI from: https://$\{your-okta-domain\}/admin/oauth2/as
 6. Example config file `/etc/localhost.cfg`
     ```
     provider = "oidc"
     redirect_url = "http://localhost:4180/oauth2/callback"
-    oidc_issuer_url = "https://${your-okta-domain}/oauth2/default"
+    oidc_issuer_url = "https://$\{your-okta-domain\}/oauth2/default"
     upstreams = [
         "http://0.0.0.0:8080"
     ]
